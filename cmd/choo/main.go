@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"choo-cli/internal/irail"
+	"github.com/neocolebunders/choo-cli/internal/irail"
 )
 
 // iRail's fuzzy matcher handles most names but rejects "nord"/"noord" on their own.

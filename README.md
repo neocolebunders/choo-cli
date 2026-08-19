@@ -16,10 +16,10 @@ $ choo nord diest
 ## Install
 
 ```
-go install ./cmd/choo
+go install github.com/neocolebunders/choo-cli/cmd/choo@latest
 ```
 
-Make sure `~/go/bin` is on your `PATH`.
+Or from a clone: `go install ./cmd/choo`. Make sure `~/go/bin` is on your `PATH`.
 
 ## Usage
 
