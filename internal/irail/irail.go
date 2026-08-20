@@ -45,6 +45,14 @@ func (w wireStop) stop() Stop {
 	}
 }
 
+var errMessages = map[int]string{
+	http.StatusNotFound:            "no route found — check the station names",
+	http.StatusBadRequest:          "iRail rejected the request — check the station names",
+	http.StatusTooManyRequests:     "too many requests — wait a moment and try again",
+	http.StatusInternalServerError: "iRail is having trouble, try again later",
+	http.StatusServiceUnavailable:  "iRail is down for the moment, try again later",
+}
+
 // Connections returns upcoming journeys between two stations.
 func Connections(from, to string) ([]Connection, error) {
 	q := url.Values{"format": {"json"}, "lang": {"en"}, "from": {from}, "to": {to}}
@@ -58,10 +66,14 @@ func Connections(from, to string) ([]Connection, error) {
 			Message string `json:"message"`
 		}
 		json.NewDecoder(resp.Body).Decode(&e)
-		if e.Message == "" {
-			e.Message = "HTTP " + resp.Status
+		msg, ok := errMessages[resp.StatusCode]
+		if !ok {
+			msg = "iRail is having trouble (" + resp.Status + ")"
 		}
-		return nil, fmt.Errorf("irail: %s", e.Message)
+		if e.Message != "" {
+			msg += " — " + e.Message
+		}
+		return nil, fmt.Errorf("%s", msg)
 	}
 	var r struct {
 		Connection []struct {
