@@ -24,5 +24,9 @@ Or from a clone: `go install ./cmd/choo`. Make sure `~/go/bin` is on your `PATH`
 ## Usage
 
 ```
-choo <from> <to>
+choo [-n 5] [-t 14:30] [-d tomorrow] <from> <to>
 ```
+
+- `-n` — number of connections to show (default 3)
+- `-t` — departure time as `HH:MM` (default now)
+- `-d` — date as `DD/MM` or `tomorrow` (default today)

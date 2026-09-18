@@ -2,6 +2,7 @@ package main
 
 import (
 	"cmp"
+	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -36,19 +37,65 @@ func delayTag(d time.Duration) string {
 	return ""
 }
 
+// dateParam turns "tomorrow" or "DD/MM" into iRail's ddmmyy format.
+func dateParam(d string) (string, error) {
+	switch d {
+	case "":
+		return "", nil
+	case "tomorrow":
+		return time.Now().AddDate(0, 0, 1).Format("020106"), nil
+	}
+	t, err := time.Parse("2/1", d)
+	if err != nil {
+		return "", fmt.Errorf("bad date %q (use DD/MM or 'tomorrow')", d)
+	}
+	return fmt.Sprintf("%02d%02d%s", t.Day(), int(t.Month()), time.Now().Format("06")), nil
+}
+
+// timeParam turns "14:30" into iRail's hhmm format.
+func timeParam(t string) (string, error) {
+	if t == "" {
+		return "", nil
+	}
+	tm, err := time.Parse("15:04", t)
+	if err != nil {
+		return "", fmt.Errorf("bad time %q (use HH:MM)", t)
+	}
+	return tm.Format("1504"), nil
+}
+
 func main() {
-	if len(os.Args) != 3 {
-		fmt.Fprintln(os.Stderr, "usage: choo <from> <to>   e.g. trains nord diest")
+	n := flag.Int("n", 3, "number of connections to show")
+	t := flag.String("t", "", "departure time, e.g. 14:30")
+	d := flag.String("d", "", "date: DD/MM or 'tomorrow'")
+	flag.Usage = func() {
+		fmt.Fprintln(os.Stderr, "usage: choo [-n 5] [-t 14:30] [-d tomorrow] <from> <to>   e.g. choo nord diest")
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+	if flag.NArg() != 2 {
+		flag.Usage()
 		os.Exit(1)
 	}
 
-	conns, err := irail.Connections(station(os.Args[1]), station(os.Args[2]))
+	date, err := dateParam(*d)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	tm, err := timeParam(*t)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	for _, c := range conns[:min(3, len(conns))] {
+	conns, err := irail.Connections(station(flag.Arg(0)), station(flag.Arg(1)), date, tm)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	for _, c := range conns[:min(*n, len(conns))] {
 		note := dim + "direct" + reset
 		if c.Transfers > 0 {
 			note = fmt.Sprintf("%s%d transfer(s)%s", yellow, c.Transfers, reset)

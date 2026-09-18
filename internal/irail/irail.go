@@ -54,8 +54,15 @@ var errMessages = map[int]string{
 }
 
 // Connections returns upcoming journeys between two stations.
-func Connections(from, to string) ([]Connection, error) {
+// date (ddmmyy) and tm (hhmm) are optional; empty means now.
+func Connections(from, to, date, tm string) ([]Connection, error) {
 	q := url.Values{"format": {"json"}, "lang": {"en"}, "from": {from}, "to": {to}}
+	if date != "" {
+		q.Set("date", date)
+	}
+	if tm != "" {
+		q.Set("time", tm)
+	}
 	resp, err := http.Get("https://api.irail.be/connections/?" + q.Encode())
 	if err != nil {
 		return nil, err
